@@ -4,3 +4,7 @@ XSimulation.Server/obj/
 XSimulation.Core/obj/
 
 XSimulation.Core/XSimulation.Core.csproj.user
+
+XSimulation.Server/bin/
+
+XSimulation.Core/bin/

@@ -10,16 +10,28 @@ namespace XSimulation.Core.Data
         /// <summary>
         /// Represents the yaw in radians.
         /// </summary>
-        public Angle Yaw;
+        public Angle Yaw
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Represents the altitude in radians.
         /// </summary>
-        public Angle Pitch;
+        public Angle Pitch
+        {
+            get;
+            set;
+        }
 
         /// <summary>
         /// Represents the altitude in radians.
         /// </summary>
-        public Angle Roll;
+        public Angle Roll
+        {
+            get;
+            set;
+        }
     }
 }

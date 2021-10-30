@@ -1,12 +1,12 @@
 ﻿using XSimulation.Core.Data;
+using XSimulation.Core.Services;
 
 namespace XSimulation.Core.Components
 {
-
     /// <summary>
     /// A component used to locate and orientate an entity in the world.
     /// </summary>
-    public struct GeoTransformComponent
+    public struct GeoTransformComponent : IComponent
     {
         /// <summary>
         /// The geographic position with the altitude.
@@ -25,6 +25,13 @@ namespace XSimulation.Core.Components
         {
             get;
             set;
+        }
+
+        /// <inheritdoc />
+        public IComponentFactory Factory
+        {
+            get;
+            internal set;
         }
     }
 }

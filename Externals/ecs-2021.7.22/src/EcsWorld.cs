@@ -39,7 +39,7 @@ namespace Leopotam.Ecs {
         /// </summary>
         /// <param name="config">Optional config for default cache sizes. On zero or negative value - default value will be used.</param>
         public EcsWorld (EcsWorldConfig config = default) {
-            var finalConfig = new EcsWorldConfig {
+            EcsWorldConfig finalConfig = new EcsWorldConfig {
                 EntityComponentsCacheSize = config.EntityComponentsCacheSize <= 0
                     ? EcsWorldConfig.DefaultEntityComponentsCacheSize
                     : config.EntityComponentsCacheSize,
@@ -107,8 +107,8 @@ namespace Leopotam.Ecs {
 #endif
             EcsEntity entity;
             entity.Owner = this;
-            for (var i = EntitiesCount - 1; i >= 0; i--) {
-                ref var entityData = ref Entities[i];
+            for (int i = EntitiesCount - 1; i >= 0; i--) {
+                ref EcsEntityData entityData = ref Entities[i];
                 if (entityData.ComponentsCountX2 > 0) {
                     entity.Id = i;
                     entity.Gen = entityData.Gen;
@@ -121,7 +121,7 @@ namespace Leopotam.Ecs {
 
             IsDestroyed = true;
 #if DEBUG
-            for (var i = DebugListeners.Count - 1; i >= 0; i--) {
+            for (int i = DebugListeners.Count - 1; i >= 0; i--) {
                 DebugListeners[i].OnWorldDestroyed (this);
             }
 #endif
@@ -148,7 +148,7 @@ namespace Leopotam.Ecs {
             // try to reuse entity from pool.
             if (FreeEntities.Count > 0) {
                 entity.Id = FreeEntities.Items[--FreeEntities.Count];
-                ref var entityData = ref Entities[entity.Id];
+                ref EcsEntityData entityData = ref Entities[entity.Id];
                 entity.Gen = entityData.Gen;
                 entityData.ComponentsCountX2 = 0;
             } else {
@@ -157,7 +157,7 @@ namespace Leopotam.Ecs {
                     Array.Resize (ref Entities, EntitiesCount << 1);
                 }
                 entity.Id = EntitiesCount++;
-                ref var entityData = ref Entities[entity.Id];
+                ref EcsEntityData entityData = ref Entities[entity.Id];
                 entityData.Components = new int[Config.EntityComponentsCacheSize * 2];
                 entityData.Gen = 1;
                 entity.Gen = entityData.Gen;
@@ -165,7 +165,7 @@ namespace Leopotam.Ecs {
             }
 #if DEBUG
             _leakedEntities.Add (entity);
-            foreach (var debugListener in DebugListeners) {
+            foreach (IEcsWorldDebugListener debugListener in DebugListeners) {
                 debugListener.OnEntityCreated (entity);
             }
 #endif
@@ -184,7 +184,7 @@ namespace Leopotam.Ecs {
             entity.Id = id;
             if (gen < 0) {
                 entity.Gen = 0;
-                ref var entityData = ref GetEntityData (entity);
+                ref EcsEntityData entityData = ref GetEntityData (entity);
                 entity.Gen = entityData.Gen;
             } else {
                 entity.Gen = (ushort) gen;
@@ -213,9 +213,9 @@ namespace Leopotam.Ecs {
                 return null;
             }
             // create new filter.
-            var filter = (EcsFilter) Activator.CreateInstance (filterType, BindingFlags.NonPublic | BindingFlags.Instance, null, _filterCtor, CultureInfo.InvariantCulture);
+            EcsFilter filter = (EcsFilter) Activator.CreateInstance (filterType, BindingFlags.NonPublic | BindingFlags.Instance, null, _filterCtor, CultureInfo.InvariantCulture);
 #if DEBUG
-            for (var filterIdx = 0; filterIdx < Filters.Count; filterIdx++) {
+            for (int filterIdx = 0; filterIdx < Filters.Count; filterIdx++) {
                 if (filter.AreComponentsSame (Filters.Items[filterIdx])) {
                     throw new Exception (
                         $"Invalid filter \"{filter.GetType ()}\": Another filter \"{Filters.Items[filterIdx].GetType ()}\" already has same components, but in different order.");
@@ -225,7 +225,7 @@ namespace Leopotam.Ecs {
             Filters.Add (filter);
             // add to component dictionaries for fast compatibility scan.
             for (int i = 0, iMax = filter.IncludedTypeIndices.Length; i < iMax; i++) {
-                if (!FilterByIncludedComponents.TryGetValue (filter.IncludedTypeIndices[i], out var filtersList)) {
+                if (!FilterByIncludedComponents.TryGetValue (filter.IncludedTypeIndices[i], out EcsGrowList<EcsFilter> filtersList)) {
                     filtersList = new EcsGrowList<EcsFilter> (8);
                     FilterByIncludedComponents[filter.IncludedTypeIndices[i]] = filtersList;
                 }
@@ -233,7 +233,7 @@ namespace Leopotam.Ecs {
             }
             if (filter.ExcludedTypeIndices != null) {
                 for (int i = 0, iMax = filter.ExcludedTypeIndices.Length; i < iMax; i++) {
-                    if (!FilterByExcludedComponents.TryGetValue (filter.ExcludedTypeIndices[i], out var filtersList)) {
+                    if (!FilterByExcludedComponents.TryGetValue (filter.ExcludedTypeIndices[i], out EcsGrowList<EcsFilter> filtersList)) {
                         filtersList = new EcsGrowList<EcsFilter> (8);
                         FilterByExcludedComponents[filter.ExcludedTypeIndices[i]] = filtersList;
                     }
@@ -241,7 +241,7 @@ namespace Leopotam.Ecs {
                 }
             }
 #if DEBUG
-            foreach (var debugListener in DebugListeners) {
+            foreach (IEcsWorldDebugListener debugListener in DebugListeners) {
                 debugListener.OnFilterCreated (filter);
             }
 #endif
@@ -249,7 +249,7 @@ namespace Leopotam.Ecs {
             EcsEntity entity;
             entity.Owner = this;
             for (int i = 0, iMax = EntitiesCount; i < iMax; i++) {
-                ref var entityData = ref Entities[i];
+                ref EcsEntityData entityData = ref Entities[i];
                 if (entityData.ComponentsCountX2 > 0 && filter.IsCompatible (entityData, 0)) {
                     entity.Id = i;
                     entity.Gen = entityData.Gen;
@@ -263,7 +263,7 @@ namespace Leopotam.Ecs {
         /// Gets stats of internal data.
         /// </summary>
         public EcsWorldStats GetStats () {
-            var stats = new EcsWorldStats () {
+            EcsWorldStats stats = new EcsWorldStats () {
                 ActiveEntities = EntitiesCount - FreeEntities.Count,
                 ReservedEntities = FreeEntities.Count,
                 Filters = Filters.Count,
@@ -326,7 +326,7 @@ namespace Leopotam.Ecs {
                     for (int i = 0, iMax = filters.Count; i < iMax; i++) {
                         if (filters.Items[i].IsCompatible (entityData, 0)) {
 #if DEBUG
-                            if (!filters.Items[i].GetInternalEntitiesMap ().TryGetValue (entity.GetInternalId (), out var filterIdx)) { filterIdx = -1; }
+                            if (!filters.Items[i].GetInternalEntitiesMap ().TryGetValue (entity.GetInternalId (), out int filterIdx)) { filterIdx = -1; }
                             if (filterIdx < 0) { throw new Exception ("Entity not in filter."); }
 #endif
                             filters.Items[i].OnRemoveEntity (entity);
@@ -337,7 +337,7 @@ namespace Leopotam.Ecs {
                     for (int i = 0, iMax = filters.Count; i < iMax; i++) {
                         if (filters.Items[i].IsCompatible (entityData, typeIdx)) {
 #if DEBUG
-                            if (!filters.Items[i].GetInternalEntitiesMap ().TryGetValue (entity.GetInternalId (), out var filterIdx)) { filterIdx = -1; }
+                            if (!filters.Items[i].GetInternalEntitiesMap ().TryGetValue (entity.GetInternalId (), out int filterIdx)) { filterIdx = -1; }
                             if (filterIdx >= 0) { throw new Exception ("Entity already in filter."); }
 #endif
                             filters.Items[i].OnAddEntity (entity);
@@ -350,7 +350,7 @@ namespace Leopotam.Ecs {
                     for (int i = 0, iMax = filters.Count; i < iMax; i++) {
                         if (filters.Items[i].IsCompatible (entityData, 0)) {
 #if DEBUG
-                            if (!filters.Items[i].GetInternalEntitiesMap ().TryGetValue (entity.GetInternalId (), out var filterIdx)) { filterIdx = -1; }
+                            if (!filters.Items[i].GetInternalEntitiesMap ().TryGetValue (entity.GetInternalId (), out int filterIdx)) { filterIdx = -1; }
                             if (filterIdx >= 0) { throw new Exception ("Entity already in filter."); }
 #endif
                             filters.Items[i].OnAddEntity (entity);
@@ -361,7 +361,7 @@ namespace Leopotam.Ecs {
                     for (int i = 0, iMax = filters.Count; i < iMax; i++) {
                         if (filters.Items[i].IsCompatible (entityData, -typeIdx)) {
 #if DEBUG
-                            if (!filters.Items[i].GetInternalEntitiesMap ().TryGetValue (entity.GetInternalId (), out var filterIdx)) { filterIdx = -1; }
+                            if (!filters.Items[i].GetInternalEntitiesMap ().TryGetValue (entity.GetInternalId (), out int filterIdx)) { filterIdx = -1; }
                             if (filterIdx < 0) { throw new Exception ("Entity not in filter."); }
 #endif
                             filters.Items[i].OnRemoveEntity (entity);
@@ -396,15 +396,15 @@ namespace Leopotam.Ecs {
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public EcsComponentPool<T> GetPool<T> () where T : struct {
-            var typeIdx = EcsComponentType<T>.TypeIndex;
+            int typeIdx = EcsComponentType<T>.TypeIndex;
             if (ComponentPools.Length < typeIdx) {
-                var len = ComponentPools.Length << 1;
+                int len = ComponentPools.Length << 1;
                 while (len <= typeIdx) {
                     len <<= 1;
                 }
                 Array.Resize (ref ComponentPools, len);
             }
-            var pool = (EcsComponentPool<T>) ComponentPools[typeIdx];
+            EcsComponentPool<T> pool = (EcsComponentPool<T>) ComponentPools[typeIdx];
             if (pool == null) {
                 pool = new EcsComponentPool<T> ();
                 ComponentPools[typeIdx] = pool;
@@ -419,15 +419,15 @@ namespace Leopotam.Ecs {
         /// <param name="entities">List to put results in it. if null - will be created. If not enough space - will be resized.</param>
         /// <returns>Amount of alive entities.</returns>
         public int GetAllEntities (ref EcsEntity[] entities) {
-            var count = EntitiesCount - FreeEntities.Count;
+            int count = EntitiesCount - FreeEntities.Count;
             if (entities == null || entities.Length < count) {
                 entities = new EcsEntity[count];
             }
             EcsEntity e;
             e.Owner = this;
-            var id = 0;
+            int id = 0;
             for (int i = 0, iMax = EntitiesCount; i < iMax; i++) {
-                ref var entityData = ref Entities[i];
+                ref EcsEntityData entityData = ref Entities[i];
                 // should we skip empty entities here?
                 if (entityData.ComponentsCountX2 >= 0) {
                     e.Id = i;

@@ -1,6 +1,11 @@
-﻿namespace XSimulation.Core.Components
+﻿using XSimulation.Core.Services;
+
+namespace XSimulation.Core.Components
 {
-    public struct EntityIdComponent
+    /// <summary>
+    /// An entity id component.
+    /// </summary>
+    public struct EntityIdComponent : IComponent
     {
         /// <summary>
         /// Defines the entity identifier from 1 to 65535
@@ -10,6 +15,13 @@
         {
             get;
             set;
+        }
+
+        /// <inheritdoc />
+        public IComponentFactory Factory
+        {
+            get;
+            internal set;
         }
     }
 }

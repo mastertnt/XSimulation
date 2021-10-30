@@ -138,7 +138,7 @@ namespace Leopotam.Ecs {
         }
 
         public int GetNamedRunSystem (string name) {
-            return _namedRunSystems.TryGetValue (name.GetHashCode (), out var idx) ? idx : -1;
+            return _namedRunSystems.TryGetValue (name.GetHashCode (), out int idx) ? idx : -1;
         }
 
         /// <summary>
@@ -209,7 +209,7 @@ namespace Leopotam.Ecs {
                 _injected = true;
                 for (int i = 0, iMax = _allSystems.Count; i < iMax; i++) {
                     if (_allSystems.Items[i] is EcsSystems nestedSystems) {
-                        foreach (var pair in _injections) {
+                        foreach (KeyValuePair<Type, object> pair in _injections) {
                             nestedSystems._injections[pair.Key] = pair.Value;
                         }
                         nestedSystems.ProcessInjects ();
@@ -239,7 +239,7 @@ namespace Leopotam.Ecs {
             ProcessInjects ();
             // IEcsPreInitSystem processing.
             for (int i = 0, iMax = _allSystems.Count; i < iMax; i++) {
-                var system = _allSystems.Items[i];
+                IEcsSystem system = _allSystems.Items[i];
                 if (system is IEcsPreInitSystem preInitSystem) {
                     preInitSystem.PreInit ();
 #if DEBUG
@@ -249,7 +249,7 @@ namespace Leopotam.Ecs {
             }
             // IEcsInitSystem processing.
             for (int i = 0, iMax = _allSystems.Count; i < iMax; i++) {
-                var system = _allSystems.Items[i];
+                IEcsSystem system = _allSystems.Items[i];
                 if (system is IEcsInitSystem initSystem) {
                     initSystem.Init ();
 #if DEBUG
@@ -271,7 +271,7 @@ namespace Leopotam.Ecs {
             if (_destroyed) { throw new Exception ("Cant touch after destroy."); }
 #endif
             for (int i = 0, iMax = _runSystems.Count; i < iMax; i++) {
-                var runItem = _runSystems.Items[i];
+                EcsSystemsRunItem runItem = _runSystems.Items[i];
                 if (runItem.Active) {
                     runItem.System.Run ();
                 }
@@ -292,8 +292,8 @@ namespace Leopotam.Ecs {
             _destroyed = true;
 #endif
             // IEcsDestroySystem processing.
-            for (var i = _allSystems.Count - 1; i >= 0; i--) {
-                var system = _allSystems.Items[i];
+            for (int i = _allSystems.Count - 1; i >= 0; i--) {
+                IEcsSystem system = _allSystems.Items[i];
                 if (system is IEcsDestroySystem destroySystem) {
                     destroySystem.Destroy ();
 #if DEBUG
@@ -302,8 +302,8 @@ namespace Leopotam.Ecs {
                 }
             }
             // IEcsPostDestroySystem processing.
-            for (var i = _allSystems.Count - 1; i >= 0; i--) {
-                var system = _allSystems.Items[i];
+            for (int i = _allSystems.Count - 1; i >= 0; i--) {
+                IEcsSystem system = _allSystems.Items[i];
                 if (system is IEcsPostDestroySystem postDestroySystem) {
                     postDestroySystem.PostDestroy ();
 #if DEBUG
@@ -325,12 +325,12 @@ namespace Leopotam.Ecs {
         /// <param name="world">EcsWorld instance.</param>
         /// <param name="injections">Additional instances for injection.</param>
         public static void InjectDataToSystem (IEcsSystem system, EcsWorld world, Dictionary<Type, object> injections) {
-            var systemType = system.GetType ();
-            var worldType = world.GetType ();
-            var filterType = typeof (EcsFilter);
-            var ignoreType = typeof (EcsIgnoreInjectAttribute);
+            Type systemType = system.GetType ();
+            Type worldType = world.GetType ();
+            Type filterType = typeof (EcsFilter);
+            Type ignoreType = typeof (EcsIgnoreInjectAttribute);
 
-            foreach (var f in systemType.GetFields (BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)) {
+            foreach (FieldInfo f in systemType.GetFields (BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)) {
                 // skip statics or fields with [EcsIgnoreInject] attribute.
                 if (f.IsStatic || Attribute.IsDefined (f, ignoreType)) {
                     continue;
@@ -351,7 +351,7 @@ namespace Leopotam.Ecs {
                     continue;
                 }
                 // Other injections.
-                foreach (var pair in injections) {
+                foreach (KeyValuePair<Type, object> pair in injections) {
                     if (f.FieldType.IsAssignableFrom (pair.Key)) {
                         f.SetValue (system, pair.Value);
                         break;
@@ -369,7 +369,7 @@ namespace Leopotam.Ecs {
         readonly EcsFilter<T> _oneFrames = null;
 
         void IEcsRunSystem.Run () {
-            for (var idx = _oneFrames.GetEntitiesCount () - 1; idx >= 0; idx--) {
+            for (int idx = _oneFrames.GetEntitiesCount () - 1; idx >= 0; idx--) {
                 _oneFrames.GetEntity (idx).Del<T> ();
             }
         }

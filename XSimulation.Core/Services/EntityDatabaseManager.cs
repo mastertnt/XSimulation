@@ -1,5 +1,4 @@
-﻿using System.IO;
-using Leopotam.Ecs;
+﻿using Leopotam.Ecs;
 
 namespace XSimulation.Core.Services
 {
@@ -11,7 +10,7 @@ namespace XSimulation.Core.Services
         /// <summary>
         /// Sets the source for all the database.
         /// Each folder is considered as category.
-        /// EAch file is considered as an entity prototype.
+        /// Each file is considered as an entity prototype.
         /// </summary>
         public string Source
         {
@@ -19,16 +18,20 @@ namespace XSimulation.Core.Services
             set;
         }
 
-        bool Load()
+        /// <summary>
+        /// Loads all factories.
+        /// </summary>
+        /// <returns>The number of loaded factories</returns>
+        public int Load()
+        {
+            return 0;
+        }
+
+        public bool SwitchSource(string pDatabaseName)
         {
             return false;
         }
 
-        bool Change(string pDatabaseName)
-        {
-            return false;
-        }
-        
         public EcsEntity Create(string pEntityFactoryName)
         {
             return default(EcsEntity);

@@ -5,6 +5,7 @@
 // ----------------------------------------------------------------------------
 
 using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -126,7 +127,7 @@ namespace Leopotam.Ecs {
         internal EcsComponentPool () {
             ItemType = typeof (T);
             if (EcsComponentType<T>.IsAutoReset) {
-                var autoResetMethod = typeof (T).GetMethod (nameof (IEcsAutoReset<T>.AutoReset));
+                MethodInfo autoResetMethod = typeof (T).GetMethod (nameof (IEcsAutoReset<T>.AutoReset));
 #if DEBUG
 
                 if (autoResetMethod == null) {

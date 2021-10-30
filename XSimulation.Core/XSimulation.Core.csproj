@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="QuantityTypes" Version="4.0.0" />
   </ItemGroup>
 
@@ -14,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Attributes\" />
+    <Folder Include="Extensions\" />
   </ItemGroup>
 
 </Project>
